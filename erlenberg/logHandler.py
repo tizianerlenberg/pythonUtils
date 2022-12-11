@@ -20,6 +20,9 @@ class Logger():
     bold_red = '\x1b[91;5;4m'
     reset = '\x1b[0m'
     def __init__(self, consoleLogLevel=NONE, fileLogLevel=NONE, processParams=False, pp=None):
+        global logger
+        if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
+            logger = self
         if not not pp:
             processParams=pp
         self.consoleLogLevel=consoleLogLevel
@@ -28,7 +31,6 @@ class Logger():
             self.paramProcessingFun()
         self.pendingMessages = queue.Queue()
         self.loggingThread = threading.Thread(target=self.threadFun)
-        self.stopFlag = False
         self.filename='tmp.log'
     def paramProcessingFun(self):
         if inspect.getmodule(inspect.stack()[2][0]).__name__ == '__main__':
@@ -48,7 +50,7 @@ class Logger():
                     try:
                         pending = self.pendingMessages.get(timeout=0.02)
                     except queue.Empty:
-                        if self.stopFlag:
+                        if not threading.main_thread().is_alive():
                             break
                         continue
                     if pending[0] >= self.consoleLogLevel:
@@ -59,7 +61,7 @@ class Logger():
                     try:
                         pending = self.pendingMessages.get(timeout=0.02)
                     except queue.Empty:
-                        if self.stopFlag:
+                        if not threading.main_thread().is_alive():
                             break
                         continue
                     if pending[0] >= self.consoleLogLevel:
@@ -88,24 +90,8 @@ class Logger():
         global logger
         if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
             self.filename = pathlib.Path(inspect.getframeinfo(inspect.stack()[1][0]).filename).stem
-            logger = self
             self.loggingThread.start()
         return logger
-    def stop(self):
-        if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
-            self.stopFlag=True
-            self.loggingThread.join()
-    def __enter__(self):
-        global logger
-        if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
-            self.filename = pathlib.Path(inspect.getframeinfo(inspect.stack()[1][0]).filename).stem
-            logger = self
-            self.loggingThread.start()
-        return logger
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
-            self.stopFlag=True
-            self.loggingThread.join()
     def formatMsg(self, message, meta, fullDate=False):
         time, filename, lineo, threadName = meta
         if fullDate:
