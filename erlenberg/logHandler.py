@@ -19,7 +19,7 @@ class Logger():
     red = '\x1b[35m'
     bold_red = '\x1b[91;5;4m'
     reset = '\x1b[0m'
-    def __init__(self, consoleLogLevel=NONE, fileLogLevel=NONE, processParams=False, pp=None):
+    def __init__(self, consoleLogLevel=NONE, fileLogLevel=NONE, processParams=False, pp=None, color=True):
         global logger
         if inspect.getmodule(inspect.stack()[1][0]).__name__ == '__main__':
             logger = self
@@ -32,6 +32,7 @@ class Logger():
         self.pendingMessages = queue.Queue()
         self.loggingThread = threading.Thread(target=self.threadFun)
         self.filename='tmp.log'
+        self.color=color
     def paramProcessingFun(self):
         if inspect.getmodule(inspect.stack()[2][0]).__name__ == '__main__':
             userInput='none,none'
@@ -74,6 +75,8 @@ class Logger():
             except:
                 pass
     def colorMod(self, message, logLevel):
+        if not self.color:
+            return message
         if logLevel <= DEBUG:
             return self.green + message + self.reset
         if logLevel <= INFO:
