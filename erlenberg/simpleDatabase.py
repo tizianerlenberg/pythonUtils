@@ -21,7 +21,7 @@ class Database(dict):
                 
     def saveToBase(self):
         with open(self.filePath, 'w') as file:
-            file.write(json.dumps(self))
+            file.write(json.dumps(self, indent=4))
             
     def replaceDict(self, setDict):
         super(Database,self).clear()
